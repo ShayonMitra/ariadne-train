@@ -9,6 +9,8 @@ from utils import *
 from parameter import *
 from node_manager import NodeManager
 
+#add the dynamic model
+from car import DifferentialDriveRobot,simulate_to_goal
 
 class Agent:
     def __init__(self, policy_net, device='cpu', plot=False):
@@ -193,6 +195,9 @@ class Agent:
 
         return [node_inputs, node_padding_mask, edge_mask, current_index, current_edge, edge_padding_mask]
 
+
+
+    #added the precalculation thing for better selection of waypoints
     def select_next_waypoint(self, observation):
         _, _, _, _, current_edge, _ = observation
         with torch.no_grad():
@@ -200,9 +205,21 @@ class Agent:
 
         action_index = torch.multinomial(logp.exp(), 1).long().squeeze(1)
         next_node_index = current_edge[0, action_index.item(), 0].item()
-        next_position = self.node_coords[next_node_index]
 
+        next_position = self.node_coords[next_node_index]
+        current_position = self.node_coords[self.current_index]
+
+        #precalculate the travel time to this waypoint using the robot's dynamics model
+        robot = DifferentialDriveRobot(wheel_radius=0.05, wheelbase=0.15, dt=0.1)
+        travel_time = simulate_to_goal(robot, start=current_position, goal=next_position)
+
+        if travel_time is None:
+            print(f"Cannot reach {next_position}.")
+            return current_position, action_index
+
+        print(f"Travel time to {next_position} is {travel_time:.2f} seconds.")
         return next_position, action_index
+
 
     def plot_env(self):
         plt.switch_backend('agg')

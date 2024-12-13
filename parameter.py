@@ -31,10 +31,10 @@ UPDATING_MAP_SIZE = 4 * SENSOR_RANGE + 4 * NODE_RESOLUTION  # nodes outside this
 MAX_EPISODE_STEP = 128
 REPLAY_SIZE = 10000
 MINIMUM_BUFFER_SIZE = 2000
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 LR = 1e-5
 GAMMA = 1
-NUM_META_AGENT = 16  # how many threads does your CPU have
+NUM_META_AGENT = 8  # how many threads does your CPU have
 
 # network parameters
 NODE_INPUT_DIM = 4

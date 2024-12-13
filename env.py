@@ -7,6 +7,8 @@ from copy import deepcopy
 from sensor import sensor_work
 from utils import *
 
+#dynamic model of the car to calculate time
+from car import DifferentialDriveRobot,simulate_to_goal
 
 class Env:
     def __init__(self, episode_index, plot=False):
@@ -90,13 +92,22 @@ class Env:
 
     def step(self, next_waypoint):
         dist = np.linalg.norm(self.robot_location - next_waypoint)
+
+        robot = DifferentialDriveRobot(wheel_radius=0.05, wheelbase=0.15, dt=0.1)
+        time_taken = simulate_to_goal(robot, start=self.robot_location, goal=next_waypoint)
+    
+        if time_taken is None:
+            time_penalty = -10 #large penalty for not reaching the goal  
+        else:
+            time_penalty = -0.3*time_taken #some alpha times the penalty 
+
         self.update_robot_location(next_waypoint)
         self.update_robot_belief()
 
         self.travel_dist += dist
         self.evaluate_exploration_rate()
 
-        reward = self.calculate_reward(dist)
+        reward = self.calculate_reward(dist) + time_penalty
 
         return reward
 
